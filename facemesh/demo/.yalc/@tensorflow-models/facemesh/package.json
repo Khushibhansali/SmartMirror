@@ -1,0 +1,31 @@
+{
+  "name": "@tensorflow-models/facemesh",
+  "version": "0.0.1-ef06c279",
+  "description": "Pretrained facemesh model",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/facemesh.esm.js",
+  "module": "dist/facemesh.esm.js",
+  "unpkg": "dist/facemesh.min.js",
+  "jsdelivr": "dist/facemesh.min.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs-core": "^1.6.1",
+    "@tensorflow/tfjs-converter": "^1.6.1"
+  },
+  "dependencies": {
+    "@tensorflow-models/blazeface": "0.0.5"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "publish-local": "yarn build && rollup -c && yalc publish",
+    "test": "ts-node run_tests.ts",
+    "build-npm": "yarn build && rollup -c",
+    "lint": "tslint -p . -t verbose",
+    "publish-demo": "./scripts/publish-demo.sh"
+  },
+  "license": "Apache-2.0"
+}

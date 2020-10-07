@@ -1,0 +1,283 @@
+<html>
+    <head>
+  <!-- Load three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+<!-- Load scatter-gl.js -->
+<script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script>
+<style>.canvas-wrapper, #scatter-gl-container {
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  #scatter-gl-container {
+    border: solid 1px black;
+    position: relative;
+  }
+
+  /* center the canvas within its wrapper */
+  #scatter-gl-container canvas {
+    transform: translate3d(-50%, -50%, 0);
+    left: 50%;
+    top: 50%;
+    position: absolute;
+  }</style>
+
+</head>
+<body>
+  <div id="main">
+      
+             <h1>Smart Mirror Demo </h1>
+    <div class="container">
+      <div class="canvas-wrapper" style="width: 500px; height: 500px;">
+        <canvas id="output" width="500" height="500"></canvas>
+        <video id="video" playsinline="" style="
+          -webkit-transform: scaleX(-1);
+          transform: scaleX(-1);
+          visibility: hidden;
+          width: auto;
+          height: auto;
+          " width="500" height="500">
+        </video>
+      </div>
+             
+ 
+        
+         <form>
+          <input type="checkbox" id="lip" name="lip" value="Lip" onclick = "renderPrediction()">
+          <label> Lips </label><br>
+          <input type="checkbox" id="right_eye" name="right_eye" value="right_eye" onclick = "renderPrediction()">
+          <label> Right Eye </label><br>
+         <input type="checkbox" id="left_eye" name="left_eye" value="left_eye" onclick = "renderPrediction()">
+          <label> Left Eye </label><br>
+          <input type="submit" value="Submit">
+        </form>
+     
+    </div>
+  <div style="position: fixed; top: 0px; left: 0px; cursor: pointer; opacity: 0.9; z-index: 10000;"><canvas width="160" height="96" style="width: 80px; height: 48px; display: block;"></canvas><canvas width="160" height="96" style="width: 80px; height: 48px; display: none;"></canvas></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+<script src="/demo.e31bb0bc.js"></script>
+              
+<script>
+
+import * as facemesh from '@tensorflow-models/facemesh';
+import Stats from 'stats.js';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+// TODO(annxingyuan): read version from tfjsWasm directly once
+// https://github.com/tensorflow/tfjs/pull/2819 is merged.
+import {version} from '@tensorflow/tfjs-backend-wasm/dist/version';
+
+import {RIGHT_EYE, LEFT_EYE, LIPS} from './triangulation';
+
+tfjsWasm.setWasmPath(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        version}/dist/tfjs-backend-wasm.wasm`);
+
+function isMobile() {
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return isAndroid || isiOS;
+}
+
+function drawPath(ctx, points, closePath) {
+    console.log(points)
+    const region = new Path2D();
+    region.moveTo(points[0][0], points[0][1]);
+
+   for (let i = 1; i < points.length; i++) {
+     const point = points[i];
+     region.lineTo(point[0], point[1]);
+   }
+
+   if (closePath) {
+     region.closePath();
+    }
+   ctx.stroke(region);
+}
+
+let model, ctx, videoWidth, videoHeight, video, canvas,
+    scatterGLHasInitialized = false, scatterGL;
+
+const VIDEO_SIZE = 500;
+const mobile = isMobile();
+// Don't render the point cloud on mobile in order to maximize performance and
+// to avoid crowding limited screen space.
+const renderPointcloud = mobile === false;
+const stats = new Stats();
+const state = {
+  backend: 'wasm',
+  maxFaces: 1,
+  triangulateMesh: true
+};
+
+if (renderPointcloud) {
+  state.renderPointcloud = true;
+}
+
+function setupDatGui() {
+  const gui = new dat.GUI();
+  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu'])
+      .onChange(async backend => {
+        await tf.setBackend(backend);
+      });
+
+  gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
+    model = await facemesh.load({maxFaces: val});
+  });
+
+  gui.add(state, 'triangulateMesh');
+
+  if (renderPointcloud) {
+    gui.add(state, 'renderPointcloud').onChange(render => {
+      document.querySelector('#scatter-gl-container').style.display =
+          render ? 'inline-block' : 'none';
+    });
+  }
+}
+
+async function setupCamera() {
+  video = document.getElementById('video');
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    'audio': false,
+    'video': {
+      facingMode: 'user',
+      // Only setting the video to a specified size in order to accommodate a
+      // point cloud, so on mobile devices accept the default size.
+      width: mobile ? undefined : VIDEO_SIZE,
+      height: mobile ? undefined : VIDEO_SIZE
+    },
+  });
+  video.srcObject = stream;
+
+  return new Promise((resolve) => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
+}
+
+async function renderPrediction() {
+  stats.begin();
+
+  const predictions = await model.estimateFaces(video);
+  ctx.drawImage(
+      video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+
+  if (predictions.length > 0) {
+    predictions.forEach(prediction => {
+      const keypoints = prediction.scaledMesh;
+
+     if (state.triangulateMesh) {
+
+        var lip = document.getElementById("lip");
+        var right = document.getElementById("right_eye");
+        var left = document.getElementById("left_eye");
+        
+         if (lip.checked == true){   
+             drawPath(ctx, RIGHT_EYE.map(index => keypoints[index]),true);
+         }
+	       
+         if (right.checked == true){  
+             drawPath(ctx, LEFT_EYE.map(index => keypoints[index]),true);
+         }
+         
+         if(left.checked == true){  
+	       drawPath(ctx, LIPS.map(index => keypoints[index]),true);
+         }
+        
+
+   /*    for (let i = 0; i < LIPS.length / 3; i++) {
+          const points = [
+           TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1] , TRIANGULATION[i * 3 + 2]
+          ].map(index => keypoints[index]);
+
+          drawPath(ctx, points, true);
+        }
+*/
+      } else {
+	
+
+        for (let i = 0; i < keypoints.length; i++) {
+          const x = keypoints[i][0];
+          const y = keypoints[i][1];
+	   }
+          ctx.beginPath();
+          ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
+          ctx.fill();
+      }
+    });
+
+    if (renderPointcloud && state.renderPointcloud && scatterGL != null) {
+      const pointsData = predictions.map(prediction => {
+        let scaledMesh = prediction.scaledMesh;
+        return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
+      });
+
+      let flattenedPointsData = [];
+      for (let i = 0; i < pointsData.length; i++) {
+        flattenedPointsData = flattenedPointsData.concat(pointsData[i]);
+      }
+      const dataset = new ScatterGL.Dataset(flattenedPointsData);
+
+      if (!scatterGLHasInitialized) {
+        scatterGL.render(dataset);
+      } else {
+        scatterGL.updateDataset(dataset);
+      }
+      scatterGLHasInitialized = true;
+    }
+  }
+
+  stats.end();
+  requestAnimationFrame(renderPrediction);
+};
+
+async function main() {
+  await tf.setBackend(state.backend);
+  setupDatGui();
+
+  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  document.getElementById('main').appendChild(stats.dom);
+
+  await setupCamera();
+  video.play();
+  videoWidth = video.videoWidth;
+  videoHeight = video.videoHeight;
+  video.width = videoWidth;
+  video.height = videoHeight;
+
+  canvas = document.getElementById('output');
+  canvas.width = videoWidth;
+  canvas.height = videoHeight;
+  const canvasContainer = document.querySelector('.canvas-wrapper');
+  canvasContainer.style = `width: ${videoWidth}px; height: ${videoHeight}px`;
+
+  ctx = canvas.getContext('2d');
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.fillStyle = '#32EEDB';
+  ctx.strokeStyle = '#32EEDB';
+  ctx.lineWidth = 0.5;
+
+  model = await facemesh.load({maxFaces: state.maxFaces});
+  renderPrediction();
+
+  if (renderPointcloud) {
+    document.querySelector('#scatter-gl-container').style =
+        `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
+
+    scatterGL = new ScatterGL(
+        document.querySelector('#scatter-gl-container'),
+        {'rotateOnStart': false, 'selectEnabled': false});
+  }
+};
+
+main();
+
+</script>
+    
+</body></html>
+
+   

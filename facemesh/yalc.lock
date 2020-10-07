@@ -1,0 +1,8 @@
+{
+  "version": "v1",
+  "packages": {
+    "@tensorflow-models/facemesh": {
+      "signature": "ef06c279e68e7e3d6d6a7433c5c55f95"
+    }
+  }
+}
