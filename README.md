@@ -6,11 +6,6 @@ MediaPipe Facemesh is a lightweight machine learning pipeline predicting 486 3D 
 
 Following basic human rights principal that all individuals have equal access to society, we created a Smart Mirror that uses AI to help people with dementia apply makeup to feel confident and be in charge of the person they want to be. 
 
-
-<img src="right_eye.png" alt="demo" style="width: 640px;"/>
-<img src="left_eye.png" alt="demo" style="width: 640px;"/>
-<img src="lips.png" alt="demo" style="width: 640px;"/>
-
 In this project, we considered user centered design to build a makeup assistant for people with dementia, or people who have trouble wearing makeup in general. This section of the project extracts certain regions of a face such as eyes and lips in order to focus on color changes and accuracy of makeup application in that region of the face. 
 
 ## Installation
@@ -124,9 +119,4 @@ main();
 
 * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
 
-#### Keypoints
-
-Here is map of the keypoints:
-
-<img src="mesh_map.jpg" alt="keypoints_map" style="width: 500px; height: 500px">
 # Smart-Mirror
