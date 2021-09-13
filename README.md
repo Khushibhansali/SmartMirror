@@ -118,5 +118,3 @@ main();
 * **returnTensors** - (defaults to `false`) Whether to return tensors as opposed to values.
 
 * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
-
-# Smart-Mirror
