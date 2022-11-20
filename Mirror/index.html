@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Smart Mirror</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com"> 
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> 
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel&family=Playfair+Display:wght@500;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <a href = "https://github.com/Khushibhansali">
+        <h3 class="glow">KHUSHI BHANSALI</h3>
+    </a>
+     <a href = "about.html">
+        <h3 class ="about">ABOUT</h3>
+    </a>
+    <h1 style= "margin-top:200px;">Revolutionary & Rejuvenating</h1>
+    <h2 style= "margin-bottom: -180px;">Smart Mirror</h2>
+<div class="layout">
+  <div id="newImages"></div>
+  
+  <div class="row">
+    <div class="cell">
+      <video id="player" autoplay></video>
+    </div>
+    <div class="cell"></div>
+      <canvas id="canvas" width="320px" height="240px"></canvas>
+    </div>
+  </div>
+  <div class="center">
+    <button class="btn btn-primary" id="capture-btn">Capture</button>
+    <a href="looks.html">
+        <button class="makeover">Ready for Makeover</button>
+    </a>
+  </div>
+  <div id="pick-image">
+    <label>Video is not supported. Pick an Image instead</label>
+    <input type="file" accept="image/*" id="image-picker">
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>
